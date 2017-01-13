@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<FileModel> list;
     DropboxAPI<AndroidAuthSession> dropboxAPI;
+    private static final String ACCESS_TOKEN = "EbN0cf7SoQ8AAAAAAABC5_1yAO_XUSkL2_E53fNHNbaUPcpj6zoOaE8NUkrjo4hf";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
         AppKeyPair appKeys = new AppKeyPair(getString(R.string.APP_KEY),getString(R.string.APP_SECRET));
         AndroidAuthSession session = new AndroidAuthSession(appKeys);
         dropboxAPI = new DropboxAPI<>(session);
-
-        dropboxAPI.getSession().startOAuth2Authentication(MainActivity.this);
 
     }
 
@@ -77,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
             } catch (IllegalStateException e) {
                 Log.i("DbAuthLog", "Error authenticating", e);
             }
+        } else {
+            dropboxAPI.getSession().startOAuth2Authentication(MainActivity.this);
         }
     }
 }
