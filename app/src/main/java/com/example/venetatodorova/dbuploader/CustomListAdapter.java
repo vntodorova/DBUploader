@@ -10,7 +10,6 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.ArrayList;
 
 public class CustomListAdapter extends ArrayAdapter<FileModel> {
@@ -44,7 +43,7 @@ public class CustomListAdapter extends ArrayAdapter<FileModel> {
                 public void onClick(View view) {
                     CheckBox cb = (CheckBox) view;
                     FileModel file = (FileModel) cb.getTag();
-                    file.isChecked(cb.isChecked());
+                    file.setChecked(cb.isChecked());
                 }
             });
         } else {
@@ -53,7 +52,7 @@ public class CustomListAdapter extends ArrayAdapter<FileModel> {
 
         FileModel file = files.get(position);
         holder.textView.setText(file.getName());
-        holder.checkBox.setChecked(file.isChecked());
+        holder.checkBox.setChecked(file.setChecked());
         holder.checkBox.setTag(file);
 
         return convertView;

@@ -12,24 +12,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class UploadTask extends AsyncTask<File,String,String> {
-
-    private DropboxAPI<AndroidAuthSession> dropboxAPI;
+public class UploadTask extends AsyncTask<String,String,String> {
 
     @Override
-    protected String doInBackground(File... params) {
-        for (File file: params) {
+    protected String doInBackground(String... params) {
+        for (String path: params) {
+            File file = new File(path);
             try(FileInputStream inputStream = new FileInputStream(file)) {
-                DropboxAPI.Entry response = dropboxAPI.putFile(file.getName(), inputStream,
-                        file.length(), null, null);
+                DropboxAPIHelper.getDropboxAPI().putFile(file.getName(), inputStream, file.length(), null, null);
             } catch (IOException | DropboxException e) {
                 e.printStackTrace();
             }
         }
         return null;
-    }
-
-    void setDropboxAPI(DropboxAPI<AndroidAuthSession> dropboxAPI) {
-        this.dropboxAPI = dropboxAPI;
     }
 }

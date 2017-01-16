@@ -2,7 +2,7 @@ package com.example.venetatodorova.dbuploader;
 
 import java.io.File;
 
-public class FileModel {
+class FileModel {
     private String name;
     private File file;
     private boolean isChecked;
@@ -17,7 +17,7 @@ public class FileModel {
         return name;
     }
 
-    public boolean isChecked() {
+    boolean setChecked() {
         return isChecked;
     }
 
@@ -25,15 +25,8 @@ public class FileModel {
         return file;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void isChecked(boolean checked) {
+    void setChecked(boolean checked) {
         this.isChecked = checked;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-    }
 }
