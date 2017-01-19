@@ -12,9 +12,9 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class CustomListAdapter extends ArrayAdapter<FileModel> {
+class CustomListAdapter extends ArrayAdapter<FileModel> {
 
-    ArrayList<FileModel> files;
+    private ArrayList<FileModel> files;
 
     private class ViewHolder{
         TextView textView;
@@ -37,24 +37,30 @@ public class CustomListAdapter extends ArrayAdapter<FileModel> {
             holder.textView = (TextView) convertView.findViewById(R.id.file_name);
             holder.checkBox = (CheckBox) convertView.findViewById(R.id.checkbox);
             convertView.setTag(holder);
-
-            holder.checkBox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    CheckBox cb = (CheckBox) view;
-                    FileModel file = (FileModel) cb.getTag();
-                    file.setChecked(cb.isChecked());
-                }
-            });
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-
+        convertView.setOnClickListener(clickListener);
         FileModel file = files.get(position);
         holder.textView.setText(file.getName());
-        holder.checkBox.setChecked(file.setChecked());
+        holder.checkBox.setChecked(file.getChecked());
         holder.checkBox.setTag(file);
 
         return convertView;
     }
+
+    private View.OnClickListener clickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            ViewHolder holder = (ViewHolder) view.getTag();
+            CheckBox checkBox = holder.checkBox;
+            if(checkBox.isChecked()){
+                checkBox.setChecked(false);
+            } else {
+                checkBox.setChecked(true);
+            }
+            FileModel file = (FileModel) checkBox.getTag();
+            file.setChecked(checkBox.isChecked());
+        }
+    };
 }

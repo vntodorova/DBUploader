@@ -7,17 +7,17 @@ class FileModel {
     private File file;
     private boolean isChecked;
 
-    FileModel(String name, File file, boolean value) {
+    FileModel(String name, File file, boolean isChecked) {
         this.name = name;
         this.file = file;
-        this.isChecked = value;
+        this.isChecked = isChecked;
     }
 
     public String getName() {
         return name;
     }
 
-    boolean setChecked() {
+    boolean getChecked() {
         return isChecked;
     }
 
