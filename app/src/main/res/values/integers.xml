@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <integer name="MAX_THREADS">3</integer>
-    <integer name="MSG_SET_PROGRESS">1</integer>
-
-</resources>

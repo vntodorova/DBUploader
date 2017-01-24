@@ -1,7 +1,11 @@
 package com.example.venetatodorova.dbuploader;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -20,27 +24,37 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class UploadService
+public class UploadService
         extends Service
-        implements UploadTask.FileUploadedListener {
+        implements UploadTask.FileUploadedListener, NetworkStateReceiver.NetworkStateReceiverListener {
 
-    public static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
-    public static final long KEEP_ALIVE_TIME = 60L;
     public static final int MSG_SET_PROGRESS = 1;
     public static final int MSG_SET_ACTIVITY = 2;
-    private UploadTask.FileUploadedListener fileUploadedListener;
+    public static final int MSG_SET_PROGRESS_STEP = 3;
 
-    private Queue<String> filesPathQueue;
-    private ArrayList<UploadTask> threadPool;
+    protected static final String SP_PROGRESS_STEP_KEY = "Progress step";
+    protected static final String SP_FILES_COUNT_KEY = "Files count";
+
+    private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+    private static final long KEEP_ALIVE_TIME = 10L;
+    private static final int MAX_THREADS = 1;
+
+    private final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private static boolean isRunning;
+    private boolean networkAvailable = true;
     private int progressStep;
     private int currentProgress = 0;
-    static boolean isRunning;
-    private Messenger activity;
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private Queue<String> filesPathQueue;
+    private ArrayList<UploadTask> threadPool;
+    private UploadTask.FileUploadedListener fileUploadedListener;
+    private Messenger activityMessenger;
+    private NetworkStateReceiver networkStateReceiver;
 
     public UploadService() {
         super();
         fileUploadedListener = this;
+        networkStateReceiver = new NetworkStateReceiver();
+        networkStateReceiver.setListener(this);
     }
 
     @Nullable
@@ -52,30 +66,32 @@ class UploadService
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.v("Service", "running");
+        this.registerReceiver(networkStateReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         isRunning = true;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        this.unregisterReceiver(networkStateReceiver);
+        Log.v("Service", "stopped");
         isRunning = false;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        ArrayList<String> filesPathList = intent.getExtras().getStringArrayList(getString(R.string.data));
-        filesPathQueue = new LinkedList<>();
-        if (filesPathList != null) {
-            for (String path : filesPathList) {
-                filesPathQueue.add(path);
-            }
-            progressStep = 100 / filesPathList.size();
-            Log.v("tag", "filePathList.size = " + filesPathList.size());
-            Log.v("tag", "progressStep = " + progressStep);
-            startUploadTasks();
-        } else {
+        ArrayList<String> sharedPref = SharedPreferencesManager.read();
+        progressStep = SharedPreferencesManager.read(SP_PROGRESS_STEP_KEY,-1);
+        if (sharedPref.size() == 0) {
+            Log.v("Service", "stopped");
             stopSelf();
         }
+
+        filesPathQueue = new LinkedList<>();
+        filesPathQueue.addAll(sharedPref);
+        startUploadTasks();
+        startForeground(startId);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -83,13 +99,13 @@ class UploadService
         BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>(NUMBER_OF_CORES);
         threadPool = new ArrayList<>();
         Executor threadPoolExecutor = new ThreadPoolExecutor(
-                NUMBER_OF_CORES,
-                NUMBER_OF_CORES,
+                NUMBER_OF_CORES * 2,
+                NUMBER_OF_CORES * 2,
                 KEEP_ALIVE_TIME,
                 TimeUnit.SECONDS,
                 workQueue);
 
-        for (int i = 0; i < getResources().getInteger(R.integer.MAX_THREADS); i++) {
+        for (int i = 0; i < MAX_THREADS; i++) {
             threadPool.add(new UploadTask(fileUploadedListener));
         }
 
@@ -98,29 +114,49 @@ class UploadService
         }
     }
 
+    private void startForeground(int ID) {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Notification notification = new Notification.Builder(this)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(ID, notification);
+    }
+
     @Override
-    public synchronized File getNextFile(UploadTask currentTask) {
+    public synchronized File getNextFile(UploadTask currentTask, String currentFilePath) {
+        if (currentFilePath != null) {
+            SharedPreferencesManager.remove(currentFilePath);
+        }
+
+        if(!networkAvailable){
+            currentTask.stopThread();
+            stopSelf();
+            stopForeground(true);
+            return null;
+        }
+
         if (filesPathQueue.isEmpty()) {
             currentTask.stopThread();
             if (isUploadFinished()) {
-                currentProgress = 100;
-                setProgress();
+                updateProgress();
+                SharedPreferencesManager.clear();
                 stopSelf();
+                stopForeground(true);
             }
             return null;
         } else {
             File file = new File(filesPathQueue.poll());
             currentProgress += progressStep;
-            setProgress();
+            updateProgress();
             return file;
         }
     }
 
-    private void setProgress() {
-        Log.v("tag", "Veni e shmatka.");
-        if(activity!=null){
+    private void updateProgress() {
+        if (activityMessenger != null) {
             try {
-                activity.send(Message.obtain(null, MSG_SET_PROGRESS, currentProgress, 0));
+                activityMessenger.send(Message.obtain(null, MSG_SET_PROGRESS));
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -140,14 +176,30 @@ class UploadService
         return isRunning;
     }
 
+    @Override
+    public void networkAvailable() {
+        networkAvailable = true;
+    }
+
+    @Override
+    public void networkUnavailable() {
+        networkAvailable = false;
+        Log.v("Network", "unavailable");
+        isRunning = false;
+        Log.v("Service", "stopped");
+        stopSelf();
+        stopForeground(true);
+    }
+
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_SET_ACTIVITY:
-                    activity = msg.replyTo;
+                    activityMessenger = msg.replyTo;
                     break;
-                case MSG_SET_PROGRESS:
+                case MSG_SET_PROGRESS_STEP:
+                    progressStep = msg.arg1;
                     break;
                 default:
                     super.handleMessage(msg);

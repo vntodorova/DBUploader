@@ -9,6 +9,7 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/progress_bar"
         android:textSize="@dimen/text_size"
         android:text="@string/choose_files"/>
 
@@ -16,6 +17,7 @@
         android:id="@+id/list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/progress_bar"
         android:layout_toEndOf="@+id/title"
         android:layout_toRightOf="@+id/title">
     </ListView>
@@ -26,13 +28,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/title"
         android:text="@string/button_text"
-        android:onClick="upload"/>
+        android:onClick="onUploadButtonClick"/>
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/upload_button"
+        android:text="@string/select_all"/>
 
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
-        android:layout_below="@id/list"/>
+        style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal" />
 
 </RelativeLayout>

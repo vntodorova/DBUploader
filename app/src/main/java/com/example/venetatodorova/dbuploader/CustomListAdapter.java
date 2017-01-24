@@ -1,6 +1,5 @@
 package com.example.venetatodorova.dbuploader;
 
-
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -54,11 +53,7 @@ class CustomListAdapter extends ArrayAdapter<FileModel> {
         public void onClick(View view) {
             ViewHolder holder = (ViewHolder) view.getTag();
             CheckBox checkBox = holder.checkBox;
-            if(checkBox.isChecked()){
-                checkBox.setChecked(false);
-            } else {
-                checkBox.setChecked(true);
-            }
+            checkBox.toggle();
             FileModel file = (FileModel) checkBox.getTag();
             file.setChecked(checkBox.isChecked());
         }

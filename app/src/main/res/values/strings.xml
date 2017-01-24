@@ -3,8 +3,7 @@
     <string name="choose_files">Choose files</string>
     <string name="button_text">Upload</string>
     <string name="download_directory">storage/emulated/0/Download/</string>
-    <string name="APP_SECRET">9n9zd2rnrqr9d13</string>
-
-    <string name="ACCESS_TOKEN">EbN0cf7SoQ8AAAAAAABC5_1yAO_XUSkL2_E53fNHNbaUPcpj6zoOaE8NUkrjo4hf</string>
     <string name="data">data</string>
+    <string name="select_all">Select All</string>
+
 </resources>
