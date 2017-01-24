@@ -156,7 +156,6 @@ public class MainActivity extends AppCompatActivity implements NetworkStateRecei
                 Message msg = Message.obtain(null, UploadService.MSG_SET_ACTIVITY);
                 msg.replyTo = messenger;
                 uploadServiceMessenger.send(msg);
-                uploadServiceMessenger.send(Message.obtain(null, UploadService.MSG_SET_PROGRESS_STEP, progressStep, 0));
             } catch (RemoteException e) {
                 e.printStackTrace();
             }

@@ -30,7 +30,6 @@ public class UploadService
 
     public static final int MSG_SET_PROGRESS = 1;
     public static final int MSG_SET_ACTIVITY = 2;
-    public static final int MSG_SET_PROGRESS_STEP = 3;
 
     protected static final String SP_PROGRESS_STEP_KEY = "Progress step";
     protected static final String SP_FILES_COUNT_KEY = "Files count";
@@ -42,8 +41,6 @@ public class UploadService
     private final Messenger mMessenger = new Messenger(new IncomingHandler());
     private static boolean isRunning;
     private boolean networkAvailable = true;
-    private int progressStep;
-    private int currentProgress = 0;
     private Queue<String> filesPathQueue;
     private ArrayList<UploadTask> threadPool;
     private UploadTask.FileUploadedListener fileUploadedListener;
@@ -82,7 +79,6 @@ public class UploadService
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         ArrayList<String> sharedPref = SharedPreferencesManager.read();
-        progressStep = SharedPreferencesManager.read(SP_PROGRESS_STEP_KEY,-1);
         if (sharedPref.size() == 0) {
             Log.v("Service", "stopped");
             stopSelf();
@@ -147,7 +143,6 @@ public class UploadService
             return null;
         } else {
             File file = new File(filesPathQueue.poll());
-            currentProgress += progressStep;
             updateProgress();
             return file;
         }
@@ -197,9 +192,6 @@ public class UploadService
             switch (msg.what) {
                 case MSG_SET_ACTIVITY:
                     activityMessenger = msg.replyTo;
-                    break;
-                case MSG_SET_PROGRESS_STEP:
-                    progressStep = msg.arg1;
                     break;
                 default:
                     super.handleMessage(msg);
